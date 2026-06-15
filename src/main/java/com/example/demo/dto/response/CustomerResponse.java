@@ -1,5 +1,6 @@
 package com.example.demo.dto.response;
 
+import com.example.demo.entity.CustomerType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +18,7 @@ public class CustomerResponse {
     private String address;
     private String identityNo;
     private String mobile;
-    private String customerType;
+    private CustomerType customerType;
     private Integer status;
     private LocalDateTime createDatetime;
     private LocalDateTime updateDatetime;

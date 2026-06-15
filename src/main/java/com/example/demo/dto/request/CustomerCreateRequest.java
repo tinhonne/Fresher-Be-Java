@@ -30,7 +30,6 @@ public class CustomerCreateRequest {
     @Pattern(regexp = "\\d{10}",message = "CCCD phai nhap so")
     private String identityNo;
 
-    @Size(min=9,max=10)
     @Pattern(regexp = "\\d{9,10}", message = "SDT phai la so")
     private String mobile;
 

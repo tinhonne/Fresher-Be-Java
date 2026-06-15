@@ -1,13 +1,14 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.request.CustomerCreateRequest;
+import com.example.demo.dto.request.CustomerUpdateRequest;
 import com.example.demo.dto.response.CustomerResponse;
 import com.example.demo.service.CustomerService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/customer")
@@ -17,7 +18,7 @@ public class CustomerController {
     private CustomerService customerService;
 
     @PostMapping
-    public CustomerResponse createCustomer(@RequestBody CustomerCreateRequest request){
+    public CustomerResponse createCustomer(@Valid  @RequestBody CustomerCreateRequest request){
         return customerService.createCustomer(request);
     }
     @GetMapping
@@ -29,7 +30,7 @@ public class CustomerController {
         return customerService.getCustomerById(id);
     }
     @PutMapping("/{id}")
-    public  CustomerResponse updateCustomerById(@PathVariable Long id,@RequestBody CustomerCreateRequest request){
+    public  CustomerResponse updateCustomerById(@PathVariable Long id,@Valid @RequestBody CustomerUpdateRequest request){
         return customerService.updateCustomerById(id,request);
     }
     @DeleteMapping("/{id}")
