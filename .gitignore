@@ -39,3 +39,5 @@ repomix-output.xml
 docs/
 
 /src/main/resources/application.yml
+/src/main/resources/application.properties
+
