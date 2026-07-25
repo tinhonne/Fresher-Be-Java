@@ -30,4 +30,13 @@ public class UserController {
         return ApiResponse.success(userService.findUser());
     }
 
+    @GetMapping("/{id}")
+    public  ApiResponse<UserResponse> findUserId(@PathVariable Long id){
+        return ApiResponse.success(userService.findUserbyId(id));
+    }
+
+    @GetMapping("/myinfo")
+    public ApiResponse<UserResponse> getMyInfo(){
+        return  ApiResponse.success(userService.getMyInfo());
+    }
 }
