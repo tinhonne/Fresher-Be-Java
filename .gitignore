@@ -37,3 +37,5 @@ repomix-output.xml
 
 #
 docs/
+
+/src/main/resources/application.yml

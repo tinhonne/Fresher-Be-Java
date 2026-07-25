@@ -1,3 +1,6 @@
 app:
   cors:
     allowed-origins: http://localhost:5173
+
+jwt:
+  signer-key: ${JWT_SIGNER_KEY:ffb8c01517a9aeefe2224e8f51fc0ac9edafb00cada04f4ca8afc784e3d49f84}
