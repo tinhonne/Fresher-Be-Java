@@ -1,6 +1,5 @@
 package com.example.demo.config;
 
-import com.example.demo.entity.RoleType;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,7 @@ public class AppConfig {
                         .username("admin")
                         .password(passwordEncoder.encode("admin"))
                         .name("Vua")
-                        .role(RoleType.ADMIN)
+//                        .role(RoleName.ADMIN)
                         .build();
 
                 userRepository.save(user);

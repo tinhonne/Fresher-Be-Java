@@ -1,0 +1,41 @@
+package com.example.demo.service.impl;
+
+import com.example.demo.dto.request.permission.PermissionRequest;
+import com.example.demo.dto.response.permission.PermissionResponse;
+import com.example.demo.entity.Permission;
+import com.example.demo.exception.AppException;
+import com.example.demo.exception.ErrorCode;
+import com.example.demo.mapper.PermissionMapping;
+import com.example.demo.repository.PermissionRepository;
+import com.example.demo.service.PermissionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class PermissionServiceImpl implements PermissionService {
+
+    private final PermissionRepository permissionRepository;
+    private final PermissionMapping permissionMapping;
+
+    @Override
+    public PermissionResponse createPermission(PermissionRequest permissionRequest) {
+
+        if(permissionRepository.existsBycode(permissionRequest.code())){
+            throw new AppException(ErrorCode.PERMISSION_EXISTED);
+        }
+        Permission save = permissionRepository.save(permissionMapping.toEntity(permissionRequest));
+        return permissionMapping.toResponse(save);
+    }
+
+    @Override
+    public List<PermissionResponse> getPermission() {
+        List<Permission> all = permissionRepository.findAll();
+        return all.stream()
+                .map(permissionMapping::toResponse)
+                .toList();
+    }
+
+}

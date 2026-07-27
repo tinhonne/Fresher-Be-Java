@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Getter
 @Setter
@@ -27,8 +30,15 @@ public class User extends BaseEntity {
     @Column(length = 20,nullable = false)
     String name;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    RoleType role;
+    boolean enabled = true;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    Set<Role> roles = new HashSet<>();
 
 }

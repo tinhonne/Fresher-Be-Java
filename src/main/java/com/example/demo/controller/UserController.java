@@ -1,42 +1,25 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.request.UserCreateRequest;
+import com.example.demo.dto.request.user.UserCreateRequest;
 import com.example.demo.dto.response.ApiResponse;
-import com.example.demo.dto.response.UserResponse;
+import com.example.demo.dto.response.user.UserSummaryResponse;
 import com.example.demo.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/users")
 @RequiredArgsConstructor
+@RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @RequestBody UserCreateRequest request){
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(userService.createUser(request)));
-    }
-    @GetMapping
-    public ApiResponse<List<UserResponse>> findUser(){
-        return ApiResponse.success(userService.findUser());
-    }
-
-    @GetMapping("/{id}")
-    public  ApiResponse<UserResponse> findUserId(@PathVariable Long id){
-        return ApiResponse.success(userService.findUserbyId(id));
-    }
-
-    @GetMapping("/myinfo")
-    public ApiResponse<UserResponse> getMyInfo(){
-        return  ApiResponse.success(userService.getMyInfo());
+    public ApiResponse<UserSummaryResponse> createUser(@Valid @RequestBody UserCreateRequest request){
+        return ApiResponse.success(userService.createUser(request));
     }
 }
