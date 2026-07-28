@@ -12,6 +12,7 @@ import com.example.demo.repository.PermissionRepository;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.service.RoleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -28,6 +29,7 @@ public class RoleServiceImpl implements RoleService {
     private final RoleMapping roleMapping;
     private final PermissionRepository permissionRepository;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public RoleResponse createRole(RoleCreateRequest request) {
         if(roleRepository.existsByName(request.name())){
@@ -39,6 +41,7 @@ public class RoleServiceImpl implements RoleService {
         return roleMapping.toResponse(roleRepository.save(role));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public List<RoleResponse> getRole() {
         List<Role> roles = roleRepository.findAll();
@@ -47,6 +50,7 @@ public class RoleServiceImpl implements RoleService {
                 .toList();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @Override
     public List<RoleSummaryResponse> getRoleOptions() {
         List<Role> roles= roleRepository.findAll();

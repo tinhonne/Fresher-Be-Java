@@ -9,5 +9,6 @@ public record UserSummaryResponse(
         String username,
         String name,
         boolean enabled,
+        boolean mustChangePassword,
         List<RoleSummaryResponse> roles
 ) {}

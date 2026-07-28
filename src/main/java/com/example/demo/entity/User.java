@@ -31,7 +31,12 @@ public class User extends BaseEntity {
     String name;
 
     @Column(nullable = false)
+    @Builder.Default
     boolean enabled = true;
+
+    @Column(nullable = false)
+    @Builder.Default
+    boolean mustChangePassword = true;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

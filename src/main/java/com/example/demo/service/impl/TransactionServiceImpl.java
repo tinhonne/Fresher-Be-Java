@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapping transactionMapping;
 
+    @PreAuthorize("hasAuthority('TRANSACTION_CREATE')")
     @Override
     @Transactional
     public TransactionResponse transfer(TransferRequest request) {
@@ -76,6 +78,7 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapping.toResponse(transactionRepository.save(transaction));
     }
 
+    @PreAuthorize("hasAuthority('TRANSACTION_VIEW')")
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TransactionResponse> getHistory(String accountNumber, LocalDateTime fromDate,

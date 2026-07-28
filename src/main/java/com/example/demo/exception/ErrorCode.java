@@ -27,6 +27,7 @@ public enum ErrorCode {
     // ===== User / Auth (4xxx - 5xxx) =====
     USER_EXISTED(4001, "Tài khoản đăng nhập đã tồn tại", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(4002, "Tài khoản đăng nhập không tồn tại", HttpStatus.BAD_REQUEST),
+    USER_DISABLED(4003, "Tài khoản đã bị khoá", HttpStatus.FORBIDDEN),
     UNAUTHENTICATED(5001, "Đăng nhập không thành công", HttpStatus.UNAUTHORIZED),
 
     // ===== Transfer (6xxx) =====
@@ -51,7 +52,7 @@ public enum ErrorCode {
     INVALID_ROLE_NAME(8004, "Tên role không hợp lệ", HttpStatus.BAD_REQUEST),
     ROLE_PERMISSION_NOT_FOUND(8005, "Permission gán cho role không tồn tại", HttpStatus.NOT_FOUND),
     DEFAULT_ROLE_CANNOT_BE_DELETED(8006, "Không thể xóa role mặc định của hệ thống", HttpStatus.BAD_REQUEST),
-
+    FORBIDDEN_ASSIGN_ROLE(8007, "Không có quyền gán role này", HttpStatus.FORBIDDEN),
     // ===== System (9xxx) =====
     INTERNAL_SERVER_ERROR(9999, "Lỗi hệ thống, vui lòng thử lại sau", HttpStatus.INTERNAL_SERVER_ERROR);
 
