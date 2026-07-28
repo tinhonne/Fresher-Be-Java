@@ -23,6 +23,7 @@ public interface UserMapping {
     default UserResponse toResponse(User user){
         List<RoleSummaryResponse> roles=user.getRoles().stream()
                 .map(role -> new RoleSummaryResponse(role.getId(), role.getName()))
+                .sorted(java.util.Comparator.comparing(RoleSummaryResponse::id))
                 .toList();
         List<String> permissions=user.getRoles().stream()
                 .flatMap(role -> role.getPermissions().stream())

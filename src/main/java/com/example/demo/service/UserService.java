@@ -9,5 +9,6 @@ import java.util.List;
 public interface UserService {
     UserSummaryResponse createUser(UserCreateRequest userCreateRequest);
     List<UserSummaryResponse> getListUser();
-    UserResponse getMyInfo();
+    UserResponse getUser(Long id);
+    UserResponse getMe();
 }

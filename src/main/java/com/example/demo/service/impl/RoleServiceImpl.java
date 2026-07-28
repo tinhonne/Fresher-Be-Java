@@ -3,17 +3,21 @@ package com.example.demo.service.impl;
 import com.example.demo.dto.request.role.RoleCreateRequest;
 import com.example.demo.dto.response.role.RoleResponse;
 import com.example.demo.dto.response.role.RoleSummaryResponse;
+import com.example.demo.dto.response.user.UserSummaryResponse;
 import com.example.demo.entity.Permission;
 import com.example.demo.entity.Role;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.mapper.RoleMapping;
+import com.example.demo.mapper.UserMapping;
 import com.example.demo.repository.PermissionRepository;
 import com.example.demo.repository.RoleRepository;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -28,8 +32,11 @@ public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
     private final RoleMapping roleMapping;
     private final PermissionRepository permissionRepository;
+    private final UserRepository userRepository;
+    private final UserMapping userMapping;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional
     @Override
     public RoleResponse createRole(RoleCreateRequest request) {
         if(roleRepository.existsByName(request.name())){
@@ -41,21 +48,40 @@ public class RoleServiceImpl implements RoleService {
         return roleMapping.toResponse(roleRepository.save(role));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional(readOnly = true)
     @Override
     public List<RoleResponse> getRole() {
-        List<Role> roles = roleRepository.findAll();
-        return roles.stream()
+        return roleRepository.findAllWithPermissionsOrderById().stream()
                 .map(roleMapping::toResponse)
                 .toList();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional(readOnly = true)
     @Override
     public List<RoleSummaryResponse> getRoleOptions() {
-        List<Role> roles= roleRepository.findAll();
-        return roles.stream()
-                .map(roleMapping::toResponseOptions)
+        return roleRepository.findAllOptionsOrderById();
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional(readOnly = true)
+    @Override
+    public RoleResponse getRole(Long id) {
+        return roleRepository.findByIdWithPermissions(id)
+                .map(roleMapping::toResponse)
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional(readOnly = true)
+    @Override
+    public List<UserSummaryResponse> getRoleUsers(Long id) {
+        if (!roleRepository.existsById(id)) {
+            throw new AppException(ErrorCode.ROLE_NOT_FOUND);
+        }
+        return userRepository.findByRoleIdWithRolesOrderById(id).stream()
+                .map(userMapping::toSumamary)
                 .toList();
     }
 

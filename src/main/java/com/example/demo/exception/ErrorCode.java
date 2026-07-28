@@ -26,7 +26,7 @@ public enum ErrorCode {
 
     // ===== User / Auth (4xxx - 5xxx) =====
     USER_EXISTED(4001, "Tài khoản đăng nhập đã tồn tại", HttpStatus.BAD_REQUEST),
-    USER_NOT_FOUND(4002, "Tài khoản đăng nhập không tồn tại", HttpStatus.BAD_REQUEST),
+    USER_NOT_FOUND(4002, "Tài khoản đăng nhập không tồn tại", HttpStatus.NOT_FOUND),
     USER_DISABLED(4003, "Tài khoản đã bị khoá", HttpStatus.FORBIDDEN),
     UNAUTHENTICATED(5001, "Đăng nhập không thành công", HttpStatus.UNAUTHORIZED),
 

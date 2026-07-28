@@ -12,11 +12,13 @@ import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -55,23 +57,54 @@ public class UserServiceImpl implements UserService {
         return userMapping.toSumamary(userRepository.save(user));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @Transactional(readOnly = true)
     @Override
     public List<UserSummaryResponse> getListUser() {
-        List<User> users=userRepository.findAll();
+        List<User> users;
+        if (hasRole("ADMIN")) {
+            users = userRepository.findAllWithRolesOrderById();
+        } else if (hasRole("MANAGER")) {
+            users = userRepository.findEmployeeScopedWithRolesOrderById();
+        } else {
+            throw new AccessDeniedException("Access denied");
+        }
         return users.stream()
                 .map(userMapping::toSumamary)
                 .toList();
     }
 
+    @PreAuthorize("hasAuthority('USER_VIEW')")
+    @Transactional(readOnly = true)
     @Override
-    public UserResponse getMyInfo() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String name = authentication.getName();
-        User user = userRepository.findByUsername(name).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+    public UserResponse getUser(Long id) {
+        User user;
+        if (hasRole("ADMIN")) {
+            user = userRepository.findByIdWithRolesAndPermissions(id)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        } else if (hasRole("MANAGER")) {
+            user = userRepository.findEmployeeScopedByIdWithRolesAndPermissions(id)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        } else {
+            throw new AccessDeniedException("Access denied");
+        }
         return userMapping.toResponse(user);
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public UserResponse getMe() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        return userMapping.toResponse(user);
+    }
+
+
+    private boolean hasRole(String role) {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + role));
+    }
 
     private Role getDefaultRole(){
         return roleRepository.findByName(DEFAULT_ROLE_NAME)

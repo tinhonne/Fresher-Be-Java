@@ -9,7 +9,9 @@ import com.example.demo.mapper.PermissionMapping;
 import com.example.demo.repository.PermissionRepository;
 import com.example.demo.service.PermissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,6 +22,8 @@ public class PermissionServiceImpl implements PermissionService {
     private final PermissionRepository permissionRepository;
     private final PermissionMapping permissionMapping;
 
+    @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
+    @Transactional
     @Override
     public PermissionResponse createPermission(PermissionRequest permissionRequest) {
 
@@ -30,12 +34,11 @@ public class PermissionServiceImpl implements PermissionService {
         return permissionMapping.toResponse(save);
     }
 
+    @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
+    @Transactional(readOnly = true)
     @Override
     public List<PermissionResponse> getPermission() {
-        List<Permission> all = permissionRepository.findAll();
-        return all.stream()
-                .map(permissionMapping::toResponse)
-                .toList();
+        return permissionRepository.findAllResponsesOrderById();
     }
 
 }

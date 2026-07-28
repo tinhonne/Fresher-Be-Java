@@ -4,6 +4,7 @@ import com.example.demo.dto.request.role.RoleCreateRequest;
 import com.example.demo.dto.response.ApiResponse;
 import com.example.demo.dto.response.role.RoleResponse;
 import com.example.demo.dto.response.role.RoleSummaryResponse;
+import com.example.demo.dto.response.user.UserSummaryResponse;
 import com.example.demo.service.RoleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,15 @@ public class RoleController {
     @GetMapping("/options")
     public ApiResponse<List<RoleSummaryResponse>> getRoleOptions(){
         return ApiResponse.success(roleService.getRoleOptions());
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<RoleResponse> getRole(@PathVariable Long id) {
+        return ApiResponse.success(roleService.getRole(id));
+    }
+
+    @GetMapping("/{id}/users")
+    public ApiResponse<List<UserSummaryResponse>> getRoleUsers(@PathVariable Long id) {
+        return ApiResponse.success(roleService.getRoleUsers(id));
     }
 }
