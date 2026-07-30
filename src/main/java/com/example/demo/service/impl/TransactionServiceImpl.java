@@ -4,6 +4,7 @@ import com.example.demo.dto.request.TransferRequest;
 import com.example.demo.dto.response.PageResponse;
 import com.example.demo.dto.response.TransactionResponse;
 import com.example.demo.entity.Account;
+import com.example.demo.entity.AccountStatus;
 import com.example.demo.entity.Transaction;
 import com.example.demo.entity.TransactionStatus;
 import com.example.demo.exception.AppException;
@@ -23,15 +24,19 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+
+import static com.example.demo.constant.TransactionConstants.*;
+
 @Service
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
-    private static final BigDecimal MINIMUM_AMOUNT = new BigDecimal("1000");
+    private static final BigDecimal MINIMUM_TRANSFER_AMOUNT = new BigDecimal(MINIMUM_AMOUNT);
 
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final TransactionMapping transactionMapping;
 
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('TRANSACTION_CREATE')")
     @Override
     @Transactional
@@ -66,7 +71,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         if (source.getBalance().compareTo(request.getAmount()) < 0) {
             transaction.setStatus(TransactionStatus.INSUFFICIENT_BALANCE);
-            transaction.setErrorReason("Insufficient balance");
+            transaction.setErrorReason(INSUFFICIENT_BALANCE_REASON);
             return transactionMapping.toResponse(transactionRepository.save(transaction));
         }
 
@@ -78,6 +83,7 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapping.toResponse(transactionRepository.save(transaction));
     }
 
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('TRANSACTION_VIEW')")
     @Override
     @Transactional(readOnly = true)
@@ -89,11 +95,11 @@ public class TransactionServiceImpl implements TransactionService {
         if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
             throw new AppException(ErrorCode.INVALID_TRANSACTION_DATE_RANGE);
         }
-        if (page < 0 || size < 1 || size > 100) {
+        if (page < 0 || size < MINIMUM_PAGE_SIZE || size > MAXIMUM_PAGE_SIZE) {
             throw new AppException(ErrorCode.INVALID_PAGE_REQUEST);
         }
         PageRequest pageable = PageRequest.of(page, size,
-                Sort.by(Sort.Order.desc("transactionDate"), Sort.Order.desc("id")));
+                Sort.by(Sort.Order.desc(TRANSACTION_DATE_PROPERTY), Sort.Order.desc(ID_PROPERTY)));
         Page<TransactionResponse> history = transactionRepository
                 .findHistory(accountNumber, fromDate, toDate, pageable)
                 .map(transactionMapping::toResponse);
@@ -101,7 +107,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void validateAmount(TransferRequest request) {
-        if (request.getAmount() == null || request.getAmount().compareTo(MINIMUM_AMOUNT) < 0) {
+        if (request.getAmount() == null || request.getAmount().compareTo(MINIMUM_TRANSFER_AMOUNT) < 0) {
             throw new AppException(ErrorCode.INVALID_TRANSFER_AMOUNT);
         }
     }
@@ -112,7 +118,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void requireActive(Account account, ErrorCode errorCode) {
-        if (!Integer.valueOf(1).equals(account.getStatus())) {
+        if (account.getStatus() != AccountStatus.ACTIVE) {
             throw new AppException(errorCode);
         }
     }

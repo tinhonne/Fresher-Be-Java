@@ -7,6 +7,8 @@ import lombok.experimental.FieldDefaults;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.example.demo.constant.ValidationConstants.*;
+
 @Entity
 @Getter
 @Setter
@@ -21,13 +23,13 @@ public class User extends BaseEntity {
     @Setter(AccessLevel.NONE)
     Long id;
 
-    @Column(length = 15,nullable = false,unique = true)
+    @Column(length = USERNAME_MAX_LENGTH,nullable = false,unique = true)
     String username;
 
-    @Column(length = 100,nullable = false)
+    @Column(length = PASSWORD_MAX_LENGTH,nullable = false)
     String password;
 
-    @Column(length = 20,nullable = false)
+    @Column(length = USER_NAME_MAX_LENGTH,nullable = false)
     String name;
 
     @Column(nullable = false)

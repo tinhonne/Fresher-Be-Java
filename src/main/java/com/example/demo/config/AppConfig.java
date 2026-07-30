@@ -20,21 +20,35 @@ import java.util.HashSet;
 @Slf4j
 public class AppConfig {
 
+    private static final String DEVELOPMENT_ADMIN_USERNAME = "admin";
+    private static final String DEVELOPMENT_ADMIN_PASSWORD = "admin";
+    private static final String DEVELOPMENT_ADMIN_NAME = "Vua";
+    private static final String DEVELOPMENT_ADMIN_ROLE = "Admin";
+
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Creates the development administrator account when it does not already exist.
+     *
+     * @param userRepository repository used to inspect and create users
+     * @param roleRepository repository used to resolve the administrator role
+     * @return the administrator bootstrap runner
+     * @throws AppException when the runner executes and the development administrator role cannot be found ({@code ROLE_NOT_FOUND})
+     */
     @Bean
-    ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository){
+    public ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository){
         return args ->{
-            if(!userRepository.existsByUsername("admin")){
+            if(!userRepository.existsByUsername(DEVELOPMENT_ADMIN_USERNAME)){
 
-                Role role = roleRepository.findByName("Admin").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+                Role role = roleRepository.findByName(DEVELOPMENT_ADMIN_ROLE)
+                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
                 HashSet<Role> roles = new HashSet<>();
                 roles.add(role);
                 User user= User.builder()
-                        .username("admin")
-                        .password(passwordEncoder.encode("admin"))
-                        .name("Vua")
+                        .username(DEVELOPMENT_ADMIN_USERNAME)
+                        .password(passwordEncoder.encode(DEVELOPMENT_ADMIN_PASSWORD))
+                        .name(DEVELOPMENT_ADMIN_NAME)
                         .roles(roles)
                         .build();
 

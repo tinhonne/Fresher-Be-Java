@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+import static com.example.demo.constant.ValidationConstants.*;
+
 @Entity
 @Getter
 @Setter
@@ -17,19 +19,20 @@ public class Account extends BaseEntity {
     @Setter(AccessLevel.NONE)
     private Long id;
 
-    @Column(length = 13,nullable = false,unique = true)
+    @Column(length = ACCOUNT_NUMBER_LENGTH,nullable = false,unique = true)
     private String accountNumber;
 
     @ManyToOne
     @JoinColumn(name="customer_id",nullable = false)
     private Customer customer;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(nullable = false, precision = MONEY_PRECISION, scale = MONEY_SCALE)
     @PositiveOrZero
     private BigDecimal balance;
 
     @Column(nullable = false)
-    private Integer status;
+    @Convert(converter = AccountStatusConverter.class)
+    private AccountStatus status;
 
 
 }

@@ -247,7 +247,7 @@ class TransactionServiceImplTest {
         Account account = new Account();
         account.setAccountNumber(number);
         account.setBalance(new BigDecimal(balance));
-        account.setStatus(status);
+        account.setStatus(com.example.demo.entity.AccountStatus.fromCode(status));
         return account;
     }
 

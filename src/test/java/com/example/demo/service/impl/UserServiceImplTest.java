@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static com.example.demo.constant.SecurityConstants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
+    private static final Set<String> RESTRICTED_ROLE_NAMES = Set.of(MANAGER_ROLE_NAME, ADMIN_ROLE_NAME);
     @Mock
     private UserRepository userRepository;
     @Mock
@@ -82,17 +84,17 @@ class UserServiceImplTest {
         assertEquals(List.of(response), service.getListUser());
 
         verify(userRepository).findAllWithRolesOrderById();
-        verify(userRepository, never()).findEmployeeScopedWithRolesOrderById();
+        verify(userRepository, never()).findEmployeeScopedWithRolesOrderById(EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES);
     }
 
     @Test
     void managerListUsesEmployeeScopedQuery() {
         authenticate("manager", "ROLE_MANAGER", "USER_VIEW");
-        when(userRepository.findEmployeeScopedWithRolesOrderById()).thenReturn(List.of());
+        when(userRepository.findEmployeeScopedWithRolesOrderById(EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES)).thenReturn(List.of());
 
         assertEquals(List.of(), service.getListUser());
 
-        verify(userRepository).findEmployeeScopedWithRolesOrderById();
+        verify(userRepository).findEmployeeScopedWithRolesOrderById(EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES);
         verify(userRepository, never()).findAllWithRolesOrderById();
     }
 
@@ -109,12 +111,12 @@ class UserServiceImplTest {
     @Test
     void managerOutOfScopeUserIsNotFound() {
         authenticate("manager", "ROLE_MANAGER", "USER_VIEW");
-        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(7L)).thenReturn(Optional.empty());
+        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(7L, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES)).thenReturn(Optional.empty());
 
         AppException exception = assertThrows(AppException.class, () -> service.getUser(7L));
 
         assertEquals(ErrorCode.USER_NOT_FOUND, exception.getErrorCode());
-        verify(userRepository).findEmployeeScopedByIdWithRolesAndPermissions(7L);
+        verify(userRepository).findEmployeeScopedByIdWithRolesAndPermissions(7L, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES);
         verify(userRepository, never()).findByIdWithRolesAndPermissions(7L);
     }
 
@@ -196,13 +198,13 @@ class UserServiceImplTest {
     void managerUpdatesScopedNameWithEmptyRoles() {
         authenticate("manager", "ROLE_MANAGER", "USER_UPDATE");
         User user = User.builder().name("Old").build();
-        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(2L, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
 
         service.updateUser(2L, new UserUpdateRequest("New", Set.of()));
 
         assertEquals("New", user.getName());
-        verify(userRepository).findEmployeeScopedByIdWithRolesAndPermissions(2L);
+        verify(userRepository).findEmployeeScopedByIdWithRolesAndPermissions(2L, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES);
     }
 
     @Test
@@ -220,7 +222,7 @@ class UserServiceImplTest {
     void managerNonemptyRolesIsForbidden() {
         authenticate("manager", "ROLE_MANAGER", "USER_UPDATE");
         User user = new User();
-        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(2L)).thenReturn(Optional.of(user));
+        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(2L, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES)).thenReturn(Optional.of(user));
 
         AppException exception = assertThrows(AppException.class,
                 () -> service.updateUser(2L, new UserUpdateRequest("New", Set.of(3L))));
@@ -233,7 +235,7 @@ class UserServiceImplTest {
     @Test
     void managerUpdateOutOfScopeIsNotFound() {
         authenticate("manager", "ROLE_MANAGER", "USER_UPDATE");
-        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(7L)).thenReturn(Optional.empty());
+        when(userRepository.findEmployeeScopedByIdWithRolesAndPermissions(7L, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLE_NAMES)).thenReturn(Optional.empty());
 
         AppException exception = assertThrows(AppException.class,
                 () -> service.updateUser(7L, new UserUpdateRequest("New", null)));

@@ -1,0 +1,4 @@
+app:
+  jwt:
+    # Dev-only key, KHÔNG dùng cho staging/production
+    signer-key: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

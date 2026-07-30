@@ -16,5 +16,6 @@ public interface AccountMapping  {
 
     @Mapping(source ="customer.id" , target = "customerId")
     @Mapping(source = "customer.name", target = "customerName")
+    @Mapping(target = "status", expression = "java(account.getStatus() == null ? null : account.getStatus().getCode())")
     AccountResponse toResponse(Account account);
 }

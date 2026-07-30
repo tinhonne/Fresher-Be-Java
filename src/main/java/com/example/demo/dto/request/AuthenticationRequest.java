@@ -6,17 +6,19 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import static com.example.demo.constant.ValidationConstants.*;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthenticationRequest {
 
     @NotBlank(message = "Tài khoản không được để trống")
-    @Size(max = 15, message = "Tài khoản không được quá 15 ký tự")
+    @Size(max = USERNAME_MAX_LENGTH, message = "Tài khoản không được quá 15 ký tự")
     private String username;
 
     @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 8, max = 15, message = "Mật khẩu phải từ 8 đến 15 ký tự")
+    @Size(min = PASSWORD_MIN_LENGTH, max = PASSWORD_MAX_LENGTH, message = "Mật khẩu phải từ 8 đến 100 ký tự")
     private String password;
 
 }

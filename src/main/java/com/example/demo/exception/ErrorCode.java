@@ -12,17 +12,25 @@ public enum ErrorCode {
     SUCCESS(1000, "Thành công", HttpStatus.OK),
     INVALID_INPUT(1001, "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
     FORBIDDEN(1002, "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+    RESOURCE_NOT_FOUND(1003, "Không tìm thấy tài nguyên", HttpStatus.NOT_FOUND),
 
     // ===== Customer (2xxx) =====
     CUSTOMER_EXISTED(2001, "Khách hàng đã tồn tại", HttpStatus.BAD_REQUEST),
     CUSTOMER_NOT_FOUND(2002, "Khách hàng không tồn tại", HttpStatus.NOT_FOUND),
-    CUSTOMER_HAS_ACCOUNT(2003, "Khách hàng còn tài khoản đang hoạt động, không thể xóa", HttpStatus.BAD_REQUEST),
+    CUSTOMER_HAS_ACCOUNT(2003, "Khách hàng còn tài khoản đang hoạt động, đóng băng hoặc chờ duyệt", HttpStatus.BAD_REQUEST),
+    INVALID_CUSTOMER_STATUS(2004, "Trạng thái khách hàng không hợp lệ", HttpStatus.BAD_REQUEST),
+    INVALID_CUSTOMER_STATUS_TRANSITION(2005, "Không thể kích hoạt lại khách hàng đã ngừng hoạt động", HttpStatus.BAD_REQUEST),
+    INVALID_CUSTOMER_SEARCH(2006, "Điều kiện tìm kiếm khách hàng không hợp lệ", HttpStatus.BAD_REQUEST),
+    INVALID_CUSTOMER_PAGE_REQUEST(2007, "Thông tin phân trang khách hàng không hợp lệ", HttpStatus.BAD_REQUEST),
 
     // ===== Account (3xxx) =====
     ACCOUNT_NOT_FOUND(3001, "Tài khoản không tồn tại", HttpStatus.NOT_FOUND),
     ACCOUNT_NUMBER_EXISTED(3002, "Số tài khoản đã tồn tại", HttpStatus.CONFLICT),
     ACCOUNT_NOT_PENDING_APPROVAL(3003, "Tài khoản không ở trạng thái chờ phê duyệt", HttpStatus.BAD_REQUEST),
     INVALID_ACCOUNT_STATUS(3004, "Trạng thái tài khoản không hợp lệ", HttpStatus.BAD_REQUEST),
+    CUSTOMER_INACTIVE(3005, "Khách hàng không hoạt động", HttpStatus.BAD_REQUEST),
+    ACCOUNT_BALANCE_NOT_ZERO(3006, "Số dư tài khoản phải bằng không", HttpStatus.BAD_REQUEST),
+    INVALID_INITIAL_BALANCE(3007, "Số dư ban đầu phải bằng không", HttpStatus.BAD_REQUEST),
 
     // ===== User / Auth (4xxx - 5xxx) =====
     USER_EXISTED(4001, "Tài khoản đăng nhập đã tồn tại", HttpStatus.BAD_REQUEST),
