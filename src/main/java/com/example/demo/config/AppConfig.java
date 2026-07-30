@@ -25,7 +25,7 @@ public class AppConfig {
     @Bean
     ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository){
         return args ->{
-            if(userRepository.findByUsername("admin").isEmpty()){
+            if(!userRepository.existsByUsername("admin")){
 
                 Role role = roleRepository.findByName("Admin").orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 

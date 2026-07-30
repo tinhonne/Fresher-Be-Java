@@ -1,7 +1,7 @@
 package com.example.demo.exception;
 import com.example.demo.dto.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,9 +36,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(value = AuthorizationDeniedException.class)
-    public  ResponseEntity<ApiResponse<?>> hanglingAccessDeniedException(AuthorizationDeniedException exception){
-        ErrorCode errorCode=ErrorCode.UNAUTHORIZED;
+    @ExceptionHandler(value = AccessDeniedException.class)
+    public  ResponseEntity<ApiResponse<?>> hanglingAccessDeniedException(AccessDeniedException exception){
+        ErrorCode errorCode=ErrorCode.FORBIDDEN;
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(ApiResponse.error(errorCode));

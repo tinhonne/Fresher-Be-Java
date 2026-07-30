@@ -11,7 +11,7 @@ public enum ErrorCode {
     // ===== Common (1xxx) =====
     SUCCESS(1000, "Thành công", HttpStatus.OK),
     INVALID_INPUT(1001, "Dữ liệu không hợp lệ", HttpStatus.BAD_REQUEST),
-    UNAUTHORIZED(1002, "Không có quyền truy cập", HttpStatus.FORBIDDEN),
+    FORBIDDEN(1002, "Không có quyền truy cập", HttpStatus.FORBIDDEN),
 
     // ===== Customer (2xxx) =====
     CUSTOMER_EXISTED(2001, "Khách hàng đã tồn tại", HttpStatus.BAD_REQUEST),
@@ -28,6 +28,9 @@ public enum ErrorCode {
     USER_EXISTED(4001, "Tài khoản đăng nhập đã tồn tại", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(4002, "Tài khoản đăng nhập không tồn tại", HttpStatus.NOT_FOUND),
     USER_DISABLED(4003, "Tài khoản đã bị khoá", HttpStatus.FORBIDDEN),
+    INVALID_USER_UPDATE(4004, "Phải có ít nhất một trường cập nhật", HttpStatus.BAD_REQUEST),
+    INCORRECT_OLD_PASSWORD(4005, "Mật khẩu cũ không chính xác", HttpStatus.UNAUTHORIZED),
+    NEW_PASSWORD_SAME_AS_OLD(4006, "Mật khẩu mới phải khác mật khẩu cũ", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(5001, "Đăng nhập không thành công", HttpStatus.UNAUTHORIZED),
 
     // ===== Transfer (6xxx) =====
@@ -44,6 +47,7 @@ public enum ErrorCode {
     PERMISSION_EXISTED(7001, "Permission đã tồn tại", HttpStatus.BAD_REQUEST),
     PERMISSION_NOT_FOUND(7002, "Permission không tồn tại", HttpStatus.NOT_FOUND),
     INVALID_PERMISSION_NAME(7003, "Tên permission không hợp lệ", HttpStatus.BAD_REQUEST),
+    PERMISSION_HAS_ROLE(7004, "Permission đang được gán cho role, không thể xóa", HttpStatus.BAD_REQUEST),
 
     // ===== Role (8xxx) =====
     ROLE_EXISTED(8001, "Role đã tồn tại", HttpStatus.BAD_REQUEST),

@@ -1,6 +1,8 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.dto.request.role.RoleCreateRequest;
+import com.example.demo.dto.request.role.RolePermissionRequest;
+import com.example.demo.dto.request.role.RoleUpdateRequest;
 import com.example.demo.dto.response.role.RoleResponse;
 import com.example.demo.dto.response.role.RoleSummaryResponse;
 import com.example.demo.dto.response.user.UserSummaryResponse;
@@ -115,6 +117,120 @@ class RoleServiceImplTest {
 
         assertEquals(ErrorCode.ROLE_NOT_FOUND, exception.getErrorCode());
         verifyNoInteractions(userRepository, userMapping);
+    }
+
+    @Test
+    void createWithNullPermissionsSavesRoleWithEmptySet() {
+        RoleCreateRequest request = new RoleCreateRequest("Auditor", "", null);
+        Role role = new Role();
+        Role saved = new Role();
+        RoleResponse response = new RoleResponse(4L, "Auditor", "", List.of());
+        when(roleMapping.toEntity(request)).thenReturn(role);
+        when(roleRepository.save(role)).thenReturn(saved);
+        when(roleMapping.toResponse(saved)).thenReturn(response);
+
+        assertSame(response, service.createRole(request));
+
+        assertEquals(Set.of(), request.permissionIds());
+        assertEquals(Set.of(), role.getPermissions());
+        verify(permissionRepository).findAllById(Set.of());
+    }
+
+    @Test
+    void duplicateCreateUsesRoleExistedError() {
+        RoleCreateRequest request = new RoleCreateRequest("Auditor", null, Set.of());
+        when(roleRepository.existsByName("Auditor")).thenReturn(true);
+
+        AppException exception = assertThrows(AppException.class, () -> service.createRole(request));
+
+        assertEquals(ErrorCode.ROLE_EXISTED, exception.getErrorCode());
+        verifyNoInteractions(permissionRepository, roleMapping);
+    }
+
+    @Test
+    void missingPermissionUsesPermissionNotFoundError() {
+        RoleCreateRequest request = new RoleCreateRequest("Auditor", null, Set.of(1L, 2L));
+        when(permissionRepository.findAllById(request.permissionIds()))
+                .thenReturn(List.of(Permission.builder().id(1L).code("A").build()));
+
+        AppException exception = assertThrows(AppException.class, () -> service.createRole(request));
+
+        assertEquals(ErrorCode.PERMISSION_NOT_FOUND, exception.getErrorCode());
+        verifyNoInteractions(roleMapping);
+    }
+
+    @Test
+    void updateReplacesPermissionsAndKeepsNullDescription() {
+        Permission oldPermission = Permission.builder().id(1L).code("OLD").build();
+        Permission replacement = Permission.builder().id(2L).code("NEW").build();
+        Role role = Role.builder().id(4L).name("Auditor").description("kept")
+                .permissions(new java.util.HashSet<>(Set.of(oldPermission))).build();
+        RoleUpdateRequest request = new RoleUpdateRequest("Reviewer", null, Set.of(2L));
+        RoleResponse response = new RoleResponse(4L, "Reviewer", "kept", List.of());
+        when(roleRepository.findByIdWithPermissions(4L)).thenReturn(Optional.of(role));
+        when(permissionRepository.findAllById(Set.of(2L))).thenReturn(List.of(replacement));
+        when(roleRepository.save(role)).thenReturn(role);
+        when(roleMapping.toResponse(role)).thenReturn(response);
+
+        assertSame(response, service.updateRole(4L, request));
+        assertEquals("kept", role.getDescription());
+        assertEquals(Set.of(replacement), role.getPermissions());
+    }
+
+    @Test
+    void emptyUpdateFailsBeforeMutation() {
+        AppException exception = assertThrows(AppException.class,
+                () -> service.updateRole(4L, new RoleUpdateRequest(null, null, null)));
+
+        assertEquals(ErrorCode.INVALID_INPUT, exception.getErrorCode());
+        verifyNoInteractions(roleRepository, permissionRepository, roleMapping);
+    }
+
+    @Test
+    void addPermissionsIsIdempotentAndPreservesExisting() {
+        Permission existing = Permission.builder().id(1L).code("A").build();
+        Permission added = Permission.builder().id(2L).code("B").build();
+        Role role = Role.builder().id(4L)
+                .permissions(new java.util.HashSet<>(Set.of(existing))).build();
+        RolePermissionRequest request = new RolePermissionRequest(Set.of(1L, 2L));
+        RoleResponse response = new RoleResponse(4L, "Auditor", null, List.of());
+        when(roleRepository.findByIdWithPermissions(4L)).thenReturn(Optional.of(role));
+        when(permissionRepository.findAllById(request.permissionIds())).thenReturn(List.of(existing, added));
+        when(roleRepository.save(role)).thenReturn(role);
+        when(roleMapping.toResponse(role)).thenReturn(response);
+
+        assertSame(response, service.addPermissions(4L, request));
+        assertEquals(Set.of(existing, added), role.getPermissions());
+    }
+
+    @Test
+    void removeMissingAssociationMutatesNothing() {
+        Permission existing = Permission.builder().id(1L).code("A").build();
+        Role role = Role.builder().id(4L)
+                .permissions(new java.util.HashSet<>(Set.of(existing))).build();
+        when(roleRepository.findByIdWithPermissions(4L)).thenReturn(Optional.of(role));
+
+        AppException exception = assertThrows(AppException.class,
+                () -> service.removePermissions(4L, new RolePermissionRequest(Set.of(1L, 2L))));
+
+        assertEquals(ErrorCode.ROLE_PERMISSION_NOT_FOUND, exception.getErrorCode());
+        assertEquals(Set.of(existing), role.getPermissions());
+        verify(roleRepository, never()).save(role);
+        verifyNoInteractions(permissionRepository);
+    }
+
+    @Test
+    void removeMayRemoveFinalPermission() {
+        Permission existing = Permission.builder().id(1L).code("A").build();
+        Role role = Role.builder().id(4L)
+                .permissions(new java.util.HashSet<>(Set.of(existing))).build();
+        when(roleRepository.findByIdWithPermissions(4L)).thenReturn(Optional.of(role));
+
+        service.removePermissions(4L, new RolePermissionRequest(Set.of(1L)));
+
+        assertEquals(Set.of(), role.getPermissions());
+        verify(roleRepository).save(role);
+        verifyNoInteractions(permissionRepository);
     }
 
     @Test

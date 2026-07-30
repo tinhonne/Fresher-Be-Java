@@ -17,6 +17,12 @@ public class PermissionController {
 
     private final PermissionService permissionService;
 
+    /**
+     * Creates a permission.
+     *
+     * @param permissionRequest the permission creation request
+     * @return the created permission
+     */
     @PostMapping
     public ApiResponse<PermissionResponse> createPermission(@Valid @RequestBody PermissionRequest permissionRequest){
       return ApiResponse.success(permissionService.createPermission(permissionRequest));
@@ -25,5 +31,17 @@ public class PermissionController {
     @GetMapping
     public ApiResponse<List<PermissionResponse>> getPermission(){
         return ApiResponse.success((permissionService.getPermission()));
+    }
+
+    /**
+     * Deletes a permission.
+     *
+     * @param id the permission identifier
+     * @return a successful empty response
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deletePermission(@PathVariable Long id) {
+        permissionService.deletePermission(id);
+        return ApiResponse.success(null);
     }
 }

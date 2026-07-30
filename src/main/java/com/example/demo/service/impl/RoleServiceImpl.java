@@ -1,6 +1,8 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.dto.request.role.RoleCreateRequest;
+import com.example.demo.dto.request.role.RolePermissionRequest;
+import com.example.demo.dto.request.role.RoleUpdateRequest;
 import com.example.demo.dto.response.role.RoleResponse;
 import com.example.demo.dto.response.role.RoleSummaryResponse;
 import com.example.demo.dto.response.user.UserSummaryResponse;
@@ -35,6 +37,12 @@ public class RoleServiceImpl implements RoleService {
     private final UserRepository userRepository;
     private final UserMapping userMapping;
 
+    /**
+     * Creates a role and resolves its requested permissions.
+     *
+     * @param request the role creation request
+     * @return the created role
+     */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional
     @Override
@@ -46,6 +54,76 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleMapping.toEntity(request);
         role.setPermissions(permissions);
         return roleMapping.toResponse(roleRepository.save(role));
+    }
+
+    /**
+     * Partially updates a role and optionally replaces all permissions.
+     *
+     * @param id the role identifier
+     * @param request the role update request
+     * @return the updated role
+     */
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional
+    @Override
+    public RoleResponse updateRole(Long id, RoleUpdateRequest request) {
+        if (request.name() == null && request.description() == null && request.permissionIds() == null) {
+            throw new AppException(ErrorCode.INVALID_INPUT);
+        }
+        Role role = findRole(id);
+        if (request.name() != null) {
+            if (request.name().isBlank()) {
+                throw new AppException(ErrorCode.INVALID_ROLE_NAME);
+            }
+            if (roleRepository.existsByNameAndIdNot(request.name(), id)) {
+                throw new AppException(ErrorCode.ROLE_EXISTED);
+            }
+            role.setName(request.name());
+        }
+        if (request.description() != null) {
+            role.setDescription(request.description());
+        }
+        if (request.permissionIds() != null) {
+            role.setPermissions(resolvePermissions(request.permissionIds()));
+        }
+        return roleMapping.toResponse(roleRepository.save(role));
+    }
+
+    /**
+     * Adds validated permissions while preserving current associations.
+     *
+     * @param roleId the role identifier
+     * @param request the permission identifiers
+     * @return the updated role
+     */
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional
+    @Override
+    public RoleResponse addPermissions(Long roleId, RolePermissionRequest request) {
+        Role role = findRole(roleId);
+        role.getPermissions().addAll(resolvePermissions(request.permissionIds()));
+        return roleMapping.toResponse(roleRepository.save(role));
+    }
+
+    /**
+     * Removes validated permission associations from a role atomically.
+     *
+     * @param roleId the role identifier
+     * @param request the permission identifiers
+     */
+    @PreAuthorize("hasAuthority('ROLE_MANAGE')")
+    @Transactional
+    @Override
+    public void removePermissions(Long roleId, RolePermissionRequest request) {
+        Role role = findRole(roleId);
+        Set<Long> associatedIds = role.getPermissions().stream()
+                .map(Permission::getId)
+                .collect(Collectors.toSet());
+        if (!associatedIds.containsAll(request.permissionIds())) {
+            throw new AppException(ErrorCode.ROLE_PERMISSION_NOT_FOUND);
+        }
+        role.getPermissions().removeIf(permission -> request.permissionIds().contains(permission.getId()));
+        roleRepository.save(role);
     }
 
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
@@ -85,6 +163,11 @@ public class RoleServiceImpl implements RoleService {
                 .toList();
     }
 
+
+    private Role findRole(Long id) {
+        return roleRepository.findByIdWithPermissions(id)
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
+    }
 
     private Set<Permission> resolvePermissions(Set<Long> permissionIds){
         List<Permission> found =permissionRepository.findAllById(permissionIds);

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record PermissionRequest(
-        @NotBlank @Size(max = 50) String code,       // vd: "TRANSACTION_APPROVE"
+        @NotBlank @Size(max = 50) String code,
         @Size(max = 255) String description
 ) {
 }

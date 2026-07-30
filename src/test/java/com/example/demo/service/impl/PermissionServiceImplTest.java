@@ -7,6 +7,7 @@ import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
 import com.example.demo.mapper.PermissionMapping;
 import com.example.demo.repository.PermissionRepository;
+import com.example.demo.repository.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,12 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -33,12 +36,14 @@ class PermissionServiceImplTest {
     private PermissionRepository permissionRepository;
     @Mock
     private PermissionMapping permissionMapping;
+    @Mock
+    private RoleRepository roleRepository;
 
     private PermissionServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new PermissionServiceImpl(permissionRepository, permissionMapping);
+        service = new PermissionServiceImpl(permissionRepository, permissionMapping, roleRepository);
     }
 
     @Test
@@ -88,13 +93,50 @@ class PermissionServiceImplTest {
     }
 
     @Test
+    void deleteRejectsMissingPermissionWithoutCheckingRolesOrDeleting() {
+        when(permissionRepository.findById(1L)).thenReturn(Optional.empty());
+
+        AppException exception = assertThrows(AppException.class, () -> service.deletePermission(1L));
+
+        assertEquals(ErrorCode.PERMISSION_NOT_FOUND, exception.getErrorCode());
+        verifyNoInteractions(roleRepository);
+        verify(permissionRepository, never()).delete(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void deleteRejectsAssignedPermissionWithoutDeleting() {
+        Permission permission = Permission.builder().id(1L).build();
+        when(permissionRepository.findById(1L)).thenReturn(Optional.of(permission));
+        when(roleRepository.existsByPermissionId(1L)).thenReturn(true);
+
+        AppException exception = assertThrows(AppException.class, () -> service.deletePermission(1L));
+
+        assertEquals(ErrorCode.PERMISSION_HAS_ROLE, exception.getErrorCode());
+        verify(permissionRepository, never()).delete(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void deleteRemovesUnassignedPermission() {
+        Permission permission = Permission.builder().id(1L).build();
+        when(permissionRepository.findById(1L)).thenReturn(Optional.of(permission));
+
+        service.deletePermission(1L);
+
+        verify(roleRepository).existsByPermissionId(1L);
+        verify(permissionRepository).delete(permission);
+    }
+
+    @Test
     void methodsRequirePermissionManageAndHaveTransactions() throws NoSuchMethodException {
         Method create = PermissionServiceImpl.class.getMethod("createPermission", PermissionRequest.class);
         Method list = PermissionServiceImpl.class.getMethod("getPermission");
+        Method delete = PermissionServiceImpl.class.getMethod("deletePermission", Long.class);
 
         assertEquals("hasAuthority('PERMISSION_MANAGE')", create.getAnnotation(PreAuthorize.class).value());
         assertEquals("hasAuthority('PERMISSION_MANAGE')", list.getAnnotation(PreAuthorize.class).value());
+        assertEquals("hasAuthority('PERMISSION_MANAGE')", delete.getAnnotation(PreAuthorize.class).value());
         assertFalse(create.getAnnotation(Transactional.class).readOnly());
         assertTrue(list.getAnnotation(Transactional.class).readOnly());
+        assertFalse(delete.getAnnotation(Transactional.class).readOnly());
     }
 }
