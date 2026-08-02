@@ -14,6 +14,11 @@ public interface PermissionRepository extends JpaRepository<Permission,Long> {
 
     Optional<Permission> findBycode(String code);
 
+    /**
+     * Projects every permission directly to a response ordered by identifier ascending.
+     *
+     * @return permission projections in stable identifier order
+     */
     @Query("select new com.example.demo.dto.response.permission.PermissionResponse(p.id, p.code, p.description) from Permission p order by p.id asc")
     List<PermissionResponse> findAllResponsesOrderById();
 }

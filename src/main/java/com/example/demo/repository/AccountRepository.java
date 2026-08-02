@@ -14,19 +14,37 @@ public interface AccountRepository extends JpaRepository<Account,Long> {
     boolean existsByAccountNumber(String accountNumber);
     Account findByAccountNumber(String accountNumber);
 
+    /**
+     * Finds an account by number and acquires a pessimistic write lock for the
+     * surrounding transaction.
+     *
+     * @param accountNumber the account number to match
+     * @return the locked account, or empty when no account has the number
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from Account a where a.accountNumber = :accountNumber")
     Optional<Account> findByAccountNumberForUpdate(String accountNumber);
 
-    boolean existsByCustomerIdAndStatus(Long id, Integer status);
+    boolean existsByCustomerIdAndStatusIn(Long id, Iterable<com.example.demo.entity.AccountStatus> statuses);
+
+    @Query("select a from Account a where a.customer.id = :customerId order by a.accountNumber asc, a.id asc")
+    Page<Account> findByCustomerIdOrderByAccountNumber(Long customerId, Pageable pageable);
+
+    @Query("select a from Account a where a.customer.id = :customerId and a.status = :status order by a.accountNumber asc, a.id asc")
+    Page<Account> findByCustomerIdAndStatusOrderByAccountNumber(Long customerId,
+            com.example.demo.entity.AccountStatus status, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Account a where a.id = :id")
+    Optional<Account> findByIdForUpdate(Long id);
+
+    /**
+     * Returns all accounts ordered by customer name ascending before pagination.
+     *
+     * @param pageable the requested page and size
+     * @return a page of accounts in customer-name order
+     */
     @Query("select a from Account a join a.customer c order by c.name ASC ")
     Page<Account> findAllSortedByCustomerName(Pageable pageable);
 
-    @Query("""
-    Select a From Account a
-            Where a.customer.id=?1
-            And a.status=1
-            Order by a.accountNumber ASC
-""")
-    Page<Account> findActiveAccountByCustomerId(Long id, Pageable pageable);
 }

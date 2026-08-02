@@ -1,0 +1,3 @@
+app:
+  jwt:
+    signer-key: ${JWT_SIGNER_KEY}

@@ -24,12 +24,28 @@ public interface RoleRepository extends JpaRepository<Role,Long> {
 
     Optional<Role> findByName(String name);
 
+    /**
+     * Fetches all roles with their permissions, de-duplicated and ordered by role identifier.
+     *
+     * @return roles with initialized permissions in identifier order
+     */
     @Query("select distinct r from Role r left join fetch r.permissions order by r.id asc")
     List<Role> findAllWithPermissionsOrderById();
 
+    /**
+     * Fetches a role and its permissions in one query.
+     *
+     * @param id the role identifier
+     * @return the role with initialized permissions, or empty when absent
+     */
     @Query("select distinct r from Role r left join fetch r.permissions where r.id = :id")
     Optional<Role> findByIdWithPermissions(@Param("id") Long id);
 
+    /**
+     * Projects all roles to summary options ordered by identifier ascending.
+     *
+     * @return role summary projections in stable identifier order
+     */
     @Query("select new com.example.demo.dto.response.role.RoleSummaryResponse(r.id, r.name) from Role r order by r.id asc")
     List<RoleSummaryResponse> findAllOptionsOrderById();
 

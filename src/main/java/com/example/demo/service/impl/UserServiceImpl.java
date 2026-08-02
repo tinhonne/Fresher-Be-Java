@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.example.demo.constant.SecurityConstants.*;
+
 @RequiredArgsConstructor
 @Service
 public class UserServiceImpl implements UserService {
@@ -35,16 +37,10 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationFacade authenticationFacade;
 
-    private static final String DEFAULT_ROLE_NAME = "Employee";
-    private static final Set<String> RESTRICTED_ROLES = Set.of("Manager", "Admin");
+    private static final Set<String> RESTRICTED_ROLES = Set.of(MANAGER_ROLE_NAME, ADMIN_ROLE_NAME);
 
 
-    /**
-     * Creates a user with the requested roles or the default employee role.
-     *
-     * @param request the user creation request
-     * @return the created user summary
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('USER_CREATE')")
     @Transactional
     @Override
@@ -65,20 +61,16 @@ public class UserServiceImpl implements UserService {
         return userMapping.toSumamary(userRepository.save(user));
     }
 
-    /**
-     * Returns users visible to the authenticated administrator or manager.
-     *
-     * @return visible user summaries
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('USER_VIEW')")
     @Transactional(readOnly = true)
     @Override
     public List<UserSummaryResponse> getListUser() {
         List<User> users;
-        if (authenticationFacade.hasRole("ADMIN")) {
+        if (authenticationFacade.hasRole(ADMIN_ROLE)) {
             users = userRepository.findAllWithRolesOrderById();
-        } else if (authenticationFacade.hasRole("MANAGER")) {
-            users = userRepository.findEmployeeScopedWithRolesOrderById();
+        } else if (authenticationFacade.hasRole(MANAGER_ROLE)) {
+            users = userRepository.findEmployeeScopedWithRolesOrderById(EMPLOYEE_ROLE_NAME, RESTRICTED_ROLES);
         } else {
             throw new AppException(ErrorCode.FORBIDDEN);
         }
@@ -87,22 +79,17 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
-    /**
-     * Returns a visible user by identifier.
-     *
-     * @param id the user identifier
-     * @return the user details
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('USER_VIEW')")
     @Transactional(readOnly = true)
     @Override
     public UserResponse getUser(Long id) {
         User user;
-        if (authenticationFacade.hasRole("ADMIN")) {
+        if (authenticationFacade.hasRole(ADMIN_ROLE)) {
             user = userRepository.findByIdWithRolesAndPermissions(id)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        } else if (authenticationFacade.hasRole("MANAGER")) {
-            user = userRepository.findEmployeeScopedByIdWithRolesAndPermissions(id)
+        } else if (authenticationFacade.hasRole(MANAGER_ROLE)) {
+            user = userRepository.findEmployeeScopedByIdWithRolesAndPermissions(id, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLES)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         } else {
             throw new AppException(ErrorCode.FORBIDDEN);
@@ -110,24 +97,14 @@ public class UserServiceImpl implements UserService {
         return userMapping.toResponse(user);
     }
 
-    /**
-     * Returns the authenticated user.
-     *
-     * @return the authenticated user details
-     */
+    /** {@inheritDoc} */
     @Transactional(readOnly = true)
     @Override
     public UserResponse getMe() {
         return userMapping.toResponse(getCurrentUser());
     }
 
-    /**
-     * Partially updates a user visible to the authenticated administrator or manager.
-     *
-     * @param id the user identifier
-     * @param request the update request
-     * @return the updated user summary
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('USER_UPDATE')")
     @Transactional
     @Override
@@ -137,14 +114,14 @@ public class UserServiceImpl implements UserService {
         }
 
         User user;
-        if (authenticationFacade.hasRole("ADMIN")) {
+        if (authenticationFacade.hasRole(ADMIN_ROLE)) {
             user = userRepository.findByIdWithRolesAndPermissions(id)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
             if (request.roleIds() != null && !request.roleIds().isEmpty()) {
                 user.setRoles(resolveRoles(request.roleIds()));
             }
-        } else if (authenticationFacade.hasRole("MANAGER")) {
-            user = userRepository.findEmployeeScopedByIdWithRolesAndPermissions(id)
+        } else if (authenticationFacade.hasRole(MANAGER_ROLE)) {
+            user = userRepository.findEmployeeScopedByIdWithRolesAndPermissions(id, EMPLOYEE_ROLE_NAME, RESTRICTED_ROLES)
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
             if (request.roleIds() != null && !request.roleIds().isEmpty()) {
                 throw new AppException(ErrorCode.FORBIDDEN);
@@ -159,11 +136,7 @@ public class UserServiceImpl implements UserService {
         return userMapping.toSumamary(userRepository.save(user));
     }
 
-    /**
-     * Changes the authenticated user's password after verifying the old password.
-     *
-     * @param request the password update request
-     */
+    /** {@inheritDoc} */
     @Transactional
     @Override
     public void updatePassword(PasswordUpdateRequest request) {
@@ -184,7 +157,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private Role getDefaultRole(){
-        return roleRepository.findByName(DEFAULT_ROLE_NAME)
+        return roleRepository.findByName(EMPLOYEE_ROLE_NAME)
                 .orElseThrow(()-> new AppException(ErrorCode.ROLE_NOT_FOUND));
     }
 
@@ -206,7 +179,7 @@ public class UserServiceImpl implements UserService {
                 .anyMatch(role -> RESTRICTED_ROLES.contains(role.getName()));
 
         if(hasRestricted){
-            if(!authenticationFacade.hasAuthority("USER_ASSIGN_RESTRICTED_ROLE")){
+            if(!authenticationFacade.hasAuthority(ASSIGN_RESTRICTED_ROLE_AUTHORITY)){
                 throw new AppException(ErrorCode.FORBIDDEN_ASSIGN_ROLE);
             }
 

@@ -24,12 +24,7 @@ public class PermissionServiceImpl implements PermissionService {
     private final PermissionMapping permissionMapping;
     private final RoleRepository roleRepository;
 
-    /**
-     * Creates a permission.
-     *
-     * @param permissionRequest the permission creation request
-     * @return the created permission
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     @Transactional
     @Override
@@ -42,6 +37,7 @@ public class PermissionServiceImpl implements PermissionService {
         return permissionMapping.toResponse(save);
     }
 
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     @Transactional(readOnly = true)
     @Override
@@ -49,11 +45,7 @@ public class PermissionServiceImpl implements PermissionService {
         return permissionRepository.findAllResponsesOrderById();
     }
 
-    /**
-     * Deletes an unassigned permission.
-     *
-     * @param id the permission identifier
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('PERMISSION_MANAGE')")
     @Transactional
     @Override

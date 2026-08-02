@@ -10,6 +10,16 @@ import org.springframework.data.jpa.repository.Query;
 import java.time.LocalDateTime;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    /**
+     * Returns transactions sent from or received by an account while eagerly loading
+     * both account associations. Date bounds are inclusive and independently optional.
+     *
+     * @param accountNumber the sending or receiving account number
+     * @param fromDate the optional earliest transaction date, inclusive
+     * @param toDate the optional latest transaction date, inclusive
+     * @param pageable the requested page, size, and sorting
+     * @return a page of matching transactions with both accounts loaded
+     */
     @EntityGraph(attributePaths = {"fromAccount", "toAccount"})
     @Query("""
             select t from Transaction t

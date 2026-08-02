@@ -37,12 +37,7 @@ public class RoleServiceImpl implements RoleService {
     private final UserRepository userRepository;
     private final UserMapping userMapping;
 
-    /**
-     * Creates a role and resolves its requested permissions.
-     *
-     * @param request the role creation request
-     * @return the created role
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional
     @Override
@@ -56,13 +51,7 @@ public class RoleServiceImpl implements RoleService {
         return roleMapping.toResponse(roleRepository.save(role));
     }
 
-    /**
-     * Partially updates a role and optionally replaces all permissions.
-     *
-     * @param id the role identifier
-     * @param request the role update request
-     * @return the updated role
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional
     @Override
@@ -89,13 +78,7 @@ public class RoleServiceImpl implements RoleService {
         return roleMapping.toResponse(roleRepository.save(role));
     }
 
-    /**
-     * Adds validated permissions while preserving current associations.
-     *
-     * @param roleId the role identifier
-     * @param request the permission identifiers
-     * @return the updated role
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional
     @Override
@@ -105,12 +88,7 @@ public class RoleServiceImpl implements RoleService {
         return roleMapping.toResponse(roleRepository.save(role));
     }
 
-    /**
-     * Removes validated permission associations from a role atomically.
-     *
-     * @param roleId the role identifier
-     * @param request the permission identifiers
-     */
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional
     @Override
@@ -126,6 +104,7 @@ public class RoleServiceImpl implements RoleService {
         roleRepository.save(role);
     }
 
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional(readOnly = true)
     @Override
@@ -135,6 +114,7 @@ public class RoleServiceImpl implements RoleService {
                 .toList();
     }
 
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional(readOnly = true)
     @Override
@@ -142,6 +122,7 @@ public class RoleServiceImpl implements RoleService {
         return roleRepository.findAllOptionsOrderById();
     }
 
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional(readOnly = true)
     @Override
@@ -151,6 +132,7 @@ public class RoleServiceImpl implements RoleService {
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
     }
 
+    /** {@inheritDoc} */
     @PreAuthorize("hasAuthority('ROLE_MANAGE')")
     @Transactional(readOnly = true)
     @Override

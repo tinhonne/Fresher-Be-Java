@@ -1,11 +1,11 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.config.properties.JwtProperties;
 import com.example.demo.dto.request.AuthenticationRequest;
 import com.example.demo.dto.request.IntrospectRequest;
 import com.example.demo.dto.response.AuthenticationResponse;
 import com.example.demo.dto.response.IntrospectResponse;
 import com.example.demo.entity.Permission;
-import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.exception.AppException;
 import com.example.demo.exception.ErrorCode;
@@ -20,18 +20,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.example.demo.constant.SecurityConstants.ROLE_PREFIX;
+import static com.example.demo.constant.SecurityConstants.SCOPE_CLAIM;
 
 @Slf4j
 @Service
@@ -42,9 +41,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${jwt.signer-key}")
-    private String signerKey;
+    private final JwtProperties jwtProperties;
 
+    /** {@inheritDoc} */
     @Override
     @Transactional(readOnly = true)
     public AuthenticationResponse authentication(AuthenticationRequest request){
@@ -70,18 +69,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
 
     }
+    /**
+     * Generates a signed access token containing the user's roles and permissions.
+     *
+     * @param user the authenticated user
+     * @return the serialized access token
+     * @throws RuntimeException if token signing cannot be performed
+     */
     public String generateToken(User user){
 
         JWSHeader jwsHeader=new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet= new JWTClaimsSet.Builder()
                 .subject(user.getUsername())
-                .issuer("test.vn")
+                .issuer(jwtProperties.issuer())
                 .issueTime(new Date())
-                .expirationTime(new Date(
-                        Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
-                ))
-                .claim("scope",buildScope(user))
+                .expirationTime(Date.from(Instant.now().plus(jwtProperties.expiration())))
+                .claim(SCOPE_CLAIM,buildScope(user))
                 .build();
 
         Payload payload=new Payload(jwtClaimsSet.toJSONObject());
@@ -89,19 +93,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         JWSObject jwsObject=new JWSObject(jwsHeader,payload);
 
         try {
-            jwsObject.sign(new MACSigner(signerKey.getBytes()));
+            jwsObject.sign(new MACSigner(jwtProperties.signerKeyBytes()));
             return jwsObject.serialize();
         } catch (JOSEException e) {
             log.error("Cannot create Token",e);
             throw new RuntimeException(e);
         }
     }
+    /** {@inheritDoc} */
     @Override
     public IntrospectResponse introspect(IntrospectRequest request)
             throws JOSEException, ParseException {
         var token=request.getToken();
 
-        JWSVerifier verifier=new MACVerifier(signerKey.getBytes());
+        JWSVerifier verifier=new MACVerifier(jwtProperties.signerKeyBytes());
 
         SignedJWT signedJWT=SignedJWT.parse(token);
         Date expiryTime=signedJWT.getJWTClaimsSet().getExpirationTime();
@@ -118,7 +123,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         Stream<String> roleScopes = user.getRoles().stream()
-                .map(role -> "ROLE_" + role.getName().toUpperCase());
+                .map(role -> ROLE_PREFIX + role.getName().toUpperCase());
 
         Stream<String> permissionScopes = user.getRoles().stream()
                 .flatMap(role -> role.getPermissions().stream())

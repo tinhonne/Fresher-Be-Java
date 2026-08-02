@@ -1,9 +1,12 @@
 package com.example.demo.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.*;
 
 import java.time.LocalDate;
+
+import static com.example.demo.constant.ValidationConstants.*;
 
 
 @Getter
@@ -17,16 +20,17 @@ public class Customer extends BaseEntity {
     @Setter(AccessLevel.NONE)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = CUSTOMER_NAME_MAX_LENGTH)
     private String name;
 
     @Column(nullable = false)
+    @PastOrPresent
     private LocalDate birthday;
 
     @Column(nullable = false)
     private String address;
 
-    @Column(nullable = false,length = 10,unique = true)
+    @Column(nullable = false,length = IDENTITY_NUMBER_LENGTH,unique = true)
     private String identityNo;
 
     @Column()

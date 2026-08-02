@@ -7,6 +7,8 @@ import lombok.experimental.FieldDefaults;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.example.demo.constant.ValidationConstants.*;
+
 @Entity
 @Getter
 @Setter
@@ -21,10 +23,10 @@ public class Permission {
     @Setter(AccessLevel.NONE)
     Long id;
 
-    @Column(length = 50, nullable = false, unique = true)
+    @Column(length = PERMISSION_CODE_MAX_LENGTH, nullable = false, unique = true)
     String code;
 
-    @Column(length = 255)
+    @Column(length = DESCRIPTION_MAX_LENGTH)
     String description;
 
     @ManyToMany(mappedBy = "permissions", fetch = FetchType.LAZY)

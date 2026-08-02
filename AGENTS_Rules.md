@@ -104,3 +104,14 @@ After implementation, report:
 4. Verification results.
 5. Remaining risks or follow-up work.
 6. Changes requiring manual review.
+## 12. Database MCP rules
+- Use the MySQL MCP for read-only inspection.
+- Never execute INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, or DDL statements.
+- Never run SELECT * without a restrictive WHERE clause and LIMIT.
+- Limit sample-data queries to at most 50 rows.
+- Prefer metadata commands such as DESCRIBE, SHOW CREATE TABLE, and SHOW INDEX.
+- Use EXPLAIN before executing potentially expensive JOIN, GROUP BY, ORDER BY, or aggregate queries.
+- Do not run full-table scans on large tables.
+- Do not retrieve passwords, tokens, secrets, personal data, or other sensitive fields.
+- Prefer COUNT estimates and schema inspection over retrieving complete datasets.
+- Ask for confirmation before running a query that may scan a large table.

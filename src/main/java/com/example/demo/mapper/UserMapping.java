@@ -20,6 +20,14 @@ public interface UserMapping {
 
     UserSummaryResponse toSumamary(User user);
 
+    /**
+     * Maps a user to a response with roles ordered by identifier and permission codes
+     * de-duplicated then sorted lexicographically. The user, roles, permissions, and
+     * permission codes must be non-null.
+     *
+     * @param user the user to map
+     * @return the user response with deterministic role and permission ordering
+     */
     default UserResponse toResponse(User user){
         List<RoleSummaryResponse> roles=user.getRoles().stream()
                 .map(role -> new RoleSummaryResponse(role.getId(), role.getName()))

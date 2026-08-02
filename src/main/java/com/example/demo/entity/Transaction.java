@@ -19,6 +19,8 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import static com.example.demo.constant.ValidationConstants.*;
+
 @Entity
 @Table(
         name = "bank_transactions",
@@ -48,7 +50,7 @@ public class Transaction extends BaseEntity {
     @JoinColumn(name = "to_account_id", nullable = false)
     private Account toAccount;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(nullable = false, precision = MONEY_PRECISION, scale = MONEY_SCALE)
     private BigDecimal amount;
 
     @Convert(converter = TransactionStatusConverter.class)

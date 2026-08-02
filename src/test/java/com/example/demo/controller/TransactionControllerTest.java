@@ -52,21 +52,21 @@ class TransactionControllerTest {
         mockMvc.perform(post("/transactions/transfer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"fromAccountNumber":"1","toAccountNumber":"2","amount":10.00,"content":"rent"}
+                                {"fromAccountNumber":"1234567890123","toAccountNumber":"9876543210987","amount":1000.00,"content":"rent"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1000))
-                .andExpect(jsonPath("$.message").value("Success"))
+                .andExpect(jsonPath("$.message").value("Thành công"))
                 .andExpect(jsonPath("$.result.fromAccountNumber").value("1"))
                 .andExpect(jsonPath("$.result.toAccountNumber").value("2"))
-                .andExpect(jsonPath("$.result.amount").value(10.00));
+                .andExpect(jsonPath("$.result.amount").value(1000.00));
 
         verify(transactionService).transfer(org.mockito.ArgumentMatchers.argThat(request ->
-                "1".equals(request.getFromAccountNumber())
-                        && "2".equals(request.getToAccountNumber())
-                        && new BigDecimal("10.00").compareTo(request.getAmount()) == 0));
+                "1234567890123".equals(request.getFromAccountNumber())
+                        && "9876543210987".equals(request.getToAccountNumber())
+                        && new BigDecimal("1000.00").compareTo(request.getAmount()) == 0));
         mockMvc.perform(post("/transaction/transfer").contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -99,7 +99,7 @@ class TransactionControllerTest {
                         .param("size", "25"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1000))
-                .andExpect(jsonPath("$.message").value("Success"))
+                .andExpect(jsonPath("$.message").value("Thành công"))
                 .andExpect(jsonPath("$.result.content[0].fromAccountNumber").value("1"))
                 .andExpect(jsonPath("$.result.pageNumber").value(2))
                 .andExpect(jsonPath("$.result.pageSize").value(25))
@@ -108,7 +108,7 @@ class TransactionControllerTest {
 
         verify(transactionService).getHistory("1", from, to, 2, 25);
         mockMvc.perform(get("/accounts/1/transaction"))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -125,6 +125,6 @@ class TransactionControllerTest {
 
     private TransactionResponse transactionResponse() {
         return new TransactionResponse(1L, LocalDateTime.of(2026, 1, 2, 3, 4), "1", "2",
-                new BigDecimal("10.00"), TransactionStatus.SUCCESS, "rent", null);
+                new BigDecimal("1000.00"), TransactionStatus.SUCCESS, "rent", null);
     }
 }
