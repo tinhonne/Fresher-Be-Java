@@ -1,52 +1,41 @@
 package com.example.demo.mapper;
 
 import com.example.demo.dto.request.user.UserCreateRequest;
-import com.example.demo.dto.response.role.RoleSummaryResponse;
 import com.example.demo.dto.response.user.UserResponse;
 import com.example.demo.dto.response.user.UserSummaryResponse;
-import com.example.demo.entity.Permission;
 import com.example.demo.entity.User;
+import java.util.List;
+import java.util.Set;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
-
 @Mapper(componentModel = "spring")
 public interface UserMapping {
+  @Mapping(target = "roles", ignore = true)
+  @Mapping(target = "password", ignore = true)
+  User toEntity(UserCreateRequest userCreateRequest);
 
-    @Mapping(target = "roles", ignore = true)
-    @Mapping(target = "password", ignore = true)
-    User toEntity(UserCreateRequest userCreateRequest);
+  UserSummaryResponse toSumamary(User user);
 
-    UserSummaryResponse toSumamary(User user);
-
-    /**
-     * Maps a user to a response with roles ordered by identifier and permission codes
-     * de-duplicated then sorted lexicographically. The user, roles, permissions, and
-     * permission codes must be non-null.
-     *
-     * @param user the user to map
-     * @return the user response with deterministic role and permission ordering
-     */
-    default UserResponse toResponse(User user){
-        List<RoleSummaryResponse> roles=user.getRoles().stream()
-                .map(role -> new RoleSummaryResponse(role.getId(), role.getName()))
-                .sorted(java.util.Comparator.comparing(RoleSummaryResponse::id))
-                .toList();
-        List<String> permissions=user.getRoles().stream()
-                .flatMap(role -> role.getPermissions().stream())
-                .map(Permission::getCode)
-                .distinct()
-                .sorted()
-                .toList();
-        return new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getName(),
-                user.isEnabled(),
-                user.isMustChangePassword(),
-                roles,
-                permissions);
-    }
-
+  default UserResponse toResponse(User user) {
+    List<String> permissions =
+        user.getRoles().stream()
+            .flatMap(
+                role ->
+                    java.util.Arrays.stream(
+                            com.example.demo.security.authorization.AppPermission.values())
+                        .filter(role::hasPermission))
+            .map(Enum::name)
+            .distinct()
+            .sorted()
+            .toList();
+    return new UserResponse(
+        user.getId(),
+        user.getUsername(),
+        user.getName(),
+        user.isEnabled(),
+        user.isMustChangePassword(),
+        Set.copyOf(user.getRoles()),
+        permissions);
+  }
 }

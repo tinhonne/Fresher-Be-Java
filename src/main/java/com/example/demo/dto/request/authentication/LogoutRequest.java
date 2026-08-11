@@ -1,0 +1,21 @@
+package com.example.demo.dto.request.authentication;
+
+import static com.example.demo.constant.ValidationConstants.JWT_TOKEN_MAX_LENGTH;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LogoutRequest {
+
+  @NotBlank
+  @Size(max = JWT_TOKEN_MAX_LENGTH)
+  String token;
+}

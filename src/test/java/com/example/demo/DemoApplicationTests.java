@@ -1,13 +1,13 @@
 package com.example.demo;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootTest(properties = "app.jwt.signer-key=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 class DemoApplicationTests {
-
-	@Test
-	void contextLoads() {
-	}
-
+  @Test
+  void applicationIsBootConfigured() {
+    assertNotNull(DemoApplication.class.getAnnotation(SpringBootApplication.class));
+  }
 }

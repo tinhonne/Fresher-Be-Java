@@ -1,56 +1,69 @@
 package com.example.demo.exception;
 
-import com.example.demo.dto.response.ApiResponse;
-import org.junit.jupiter.api.Test;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.ResponseEntity;
-
-import java.sql.SQLException;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.example.demo.dto.response.ApiResponse;
+import com.example.demo.dto.response.ValidationErrorResponse;
+import com.example.demo.entity.Customer;
+import com.example.demo.exception.error.CommonError;
+import com.example.demo.exception.mapper.ValidationErrorMapper;
+import java.lang.reflect.Method;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
 class GlobalExceptionHandlerTest {
 
-    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
+  private final GlobalExceptionHandler handler =
+      new GlobalExceptionHandler(new ValidationErrorMapper());
 
-    @Test
-    void accountNumberUniqueViolationMapsToAccountNumberExisted() {
-        DataIntegrityViolationException exception = violation(
-                "Duplicate entry '123' for key 'accounts.UK_random'", "account_number");
+  @Test
+  void optimisticLockingFailureMapsToConcurrentModification() {
+    ObjectOptimisticLockingFailureException exception =
+        new ObjectOptimisticLockingFailureException(Customer.class, 5L);
 
-        assertResponse(ErrorCode.ACCOUNT_NUMBER_EXISTED, handler.handlingDataIntegrityViolation(exception));
-    }
+    assertResponse(
+        CommonError.CONCURRENT_MODIFICATION, handler.handleOptimisticLockingFailure(exception));
+  }
 
-    @Test
-    void identityNumberUniqueViolationMapsToCustomerExisted() {
-        DataIntegrityViolationException exception = violation(
-                "Duplicate entry '123' for key 'customers.UK_random'", "identity_no");
+  @Test
+  void validationMapsToInvalidInputWithStructuredResult() throws Exception {
+    BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "target");
+    bindingResult.addError(new FieldError("target", "field", "INVALID"));
+    Method method =
+        GlobalExceptionHandlerTest.class.getDeclaredMethod("validationArgument", Object.class);
+    MethodArgumentNotValidException exception =
+        new MethodArgumentNotValidException(
+            new org.springframework.core.MethodParameter(method, 0), bindingResult);
 
-        assertResponse(ErrorCode.CUSTOMER_EXISTED, handler.handlingDataIntegrityViolation(exception));
-    }
+    ResponseEntity<ApiResponse<?>> response = handler.handleValidationExceptions(exception);
 
-    @Test
-    void unknownIntegrityViolationMapsToInvalidInputWithoutDatabaseMessage() {
-        String databaseMessage = "Duplicate entry 'secret' for key 'UK_random'";
-        DataIntegrityViolationException exception = new DataIntegrityViolationException(
-                "write failed", new SQLException(databaseMessage));
+    assertEquals(CommonError.INVALID_INPUT.getHttpStatus(), response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals(CommonError.INVALID_INPUT.getCode(), response.getBody().getCode());
+    assertEquals(CommonError.INVALID_INPUT.getMessage(), response.getBody().getMessage());
+    ValidationErrorResponse result = (ValidationErrorResponse) response.getBody().getResult();
+    assertEquals(1, result.errors().size());
+    assertEquals("field", result.errors().getFirst().field());
+  }
 
-        ResponseEntity<ApiResponse<?>> response = handler.handlingDataIntegrityViolation(exception);
+  @Test
+  void unexpectedExceptionMapsToInternalServerError() {
+    assertResponse(
+        CommonError.INTERNAL_SERVER_ERROR,
+        handler.handleException(new RuntimeException("write failed")));
+  }
 
-        assertResponse(ErrorCode.INVALID_INPUT, response);
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.INVALID_INPUT.getMessage(), response.getBody().getMessage());
-    }
+  private void validationArgument(Object value) {}
 
-    private DataIntegrityViolationException violation(String message, String column) {
-        return new DataIntegrityViolationException("write failed", new SQLException(message + " (" + column + ")"));
-    }
-
-    private void assertResponse(ErrorCode expected, ResponseEntity<ApiResponse<?>> response) {
-        assertEquals(expected.getHttpStatus(), response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(expected.getCode(), response.getBody().getCode());
-        assertEquals(expected.getMessage(), response.getBody().getMessage());
-    }
+  private void assertResponse(ErrorDefinition expected, ResponseEntity<ApiResponse<?>> response) {
+    assertEquals(expected.getHttpStatus(), response.getStatusCode());
+    assertNotNull(response.getBody());
+    assertEquals(expected.getCode(), response.getBody().getCode());
+    assertEquals(expected.getMessage(), response.getBody().getMessage());
+  }
 }
